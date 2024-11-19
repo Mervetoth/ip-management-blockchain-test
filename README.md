@@ -1,81 +1,119 @@
-# IP Management Blockchain Test
 
-This project is a testing environment for blockchain-based Intellectual Property (IP) Management, enabling the registration and transfer of IP ownership on the blockchain.
+# Documentation: Deploying and Managing the IP Management Smart Contract
 
-## Prerequisites
+This report provides a step-by-step guide on compiling, deploying, and interacting with the `IpManagement` smart contract. It includes all commands executed using `Truffle`.
 
-- [Node.js and npm](https://nodejs.org/en/download/)
-- [Truffle](https://www.trufflesuite.com/truffle): Install globally with `npm install -g truffle`
-- [Ganache](https://www.trufflesuite.com/ganache) for local blockchain testing
+---
 
-## Setup
+## **1. Compile the Smart Contract**
 
-1. **Clone the Repository**:
-   ```bash
-   git clone https://github.com/Mervetoth/ip-management-blockchain-test.git
-   cd ip-management-blockchain-test
-   ```
-
-2. **Install Dependencies**:
-   ```bash
-   npm install
-   ```
-
-## Commands
-
-### Compile Contracts
-
-Compiles Solidity contracts, generating the ABI and bytecode:
+Run the following command to compile the smart contract:
 
 ```bash
-npx truffle compile
+PS D:\5sae2\stage ete\ip-management-blockchain-test> npx truffle compile
 ```
 
-### Deploy Contracts
+Output:
+- Contracts compiled successfully, and artifacts are stored in the `build/contracts` directory.
 
-Deploys contracts to the blockchain. `--reset` ensures a fresh deployment:
+---
+
+## **2. Deploy the Smart Contract**
+
+Deploy the contract to the development blockchain:
 
 ```bash
-npx truffle migrate --reset
+PS D:\5sae2\stage ete\ip-management-blockchain-test> npx truffle migrate --reset
 ```
 
-### Register IP on the Blockchain
+Output:
+- `IpManagement` contract deployed successfully with details, including the contract address.
 
-Use the following in the Truffle console to register IP:
+---
+
+## **3. Open Truffle Console**
+
+To interact with the smart contract:
+
+```bash
+PS D:\5sae2\stage ete\ip-management-blockchain-test> truffle console --network development
+```
+
+---
+
+## **4. Interact with the Contract**
+
+### **Step 1: Get the Deployed Instance**
+```javascript
+const ipManagement = await IpManagement.deployed();
+```
+
+### **Step 2: Set Owner Address (Account[0])**
+```javascript
+const owner = (await web3.eth.getAccounts())[0];
+```
+
+### **Step 3: Register a New IP**
+Register a new IP titled *"blockchain-ip-management-system-summer-internship"*:
 
 ```javascript
-let keywords = ["art", "digital", "painting"];
-let result = await instance.registerIP(
-    "0x5564d20c5B1A68B66EaAF8664839ff219E08273",  // Owner address
-    "Digital Art Piece",                         // Title
-    "Artwork",                                   // Category
-    "A beautiful digital painting.",             // Description
-    "https://example.com/artwork",               // URL
-    keywords,                                    // Keywords
-    "approved",                                  // Status
-    { from: accounts[0] }
+const ipId = await ipManagement.registerIP(
+    owner, 
+    "blockchain-ip-management-system-summer-internship", 
+    "Blockchain", 
+    "A system for managing IPs using blockchain for summer internship project.", 
+    "https://example.com/document", 
+    "pending", 
+    ["blockchain", "management", "internship"], 
+    { from: owner }
 );
-
-let ipId = result.logs[0].args.ipId.toNumber();  // Get unique IP ID
 ```
 
-### Transfer IP Ownership
-
-Transfer IP to another account with a transaction fee:
+### **Step 4: Transfer the IP to Account[5]**
+Transfer ownership of the IP to account[5], including a payment of `0.1 Ether`:
 
 ```javascript
-await instance.transferIP(ipId, accounts[1], { 
-    from: "0x5564d20c5B1A68B66EaAF8664839ff219E08273", 
-    value: web3.utils.toWei('75', 'ether') 
-});
+await ipManagement.transferIP(
+    ipId.logs[0].args.ipId.toNumber(), 
+    (await web3.eth.getAccounts())[5], 
+    { from: (await web3.eth.getAccounts())[0], value: web3.utils.toWei("0.1", "ether") }
+);
 ```
 
-## Running the Project
+---
 
-To start, open the Truffle console:
+## **5. Additional Tests**
 
-```bash
-npx truffle console
+### **Attempting Invalid Transfer**
+Trying to transfer the IP again from the original owner results in an error:
+
+```javascript
+await ipManagement.transferIP(
+    ipId.logs[0].args.ipId.toNumber(), 
+    (await web3.eth.getAccounts())[8], 
+    { from: (await web3.eth.getAccounts())[0], value: web3.utils.toWei("30", "ether") }
+);
+// Error: Only the owner can transfer this IP
 ```
 
-From the console, use the commands above to interact with the contracts.
+### **Valid Transfer from Current Owner**
+Transfer the IP from account[5] to account[8]:
+
+```javascript
+await ipManagement.transferIP(
+    ipId.logs[0].args.ipId.toNumber(), 
+    (await web3.eth.getAccounts())[8], 
+    { from: (await web3.eth.getAccounts())[5], value: web3.utils.toWei("30", "ether") }
+);
+```
+
+---
+
+## **Summary**
+- **Contract Deployment**: Successful
+- **IP Registered**: *blockchain-ip-management-system-summer-internship* by account[0]
+- **Ownership Transfers**:
+  1. From account[0] to account[5] with `0.1 Ether`
+  2. From account[5] to account[8] with `30 Ether`
+
+The smart contract and ownership management processes function as expected.

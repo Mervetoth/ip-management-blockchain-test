@@ -20,6 +20,7 @@ contract IpManagement {
     uint public ipCounter = 0; // Keeps track of the number of IPs registered
 
     event IPRegistered(uint indexed ipId, address indexed owner, string title);
+
     event IPTransferred(
         uint indexed ipId,
         address indexed from,
@@ -97,5 +98,11 @@ contract IpManagement {
             ip.status,
             ip.visibility
         );
+    }
+
+    // Function to retrieve the ownership of an IP by its ID
+    function getOwnership(uint ipId) public view returns (address) {
+        IP memory ip = ipRecords[ipId];
+        return ip.owner;
     }
 }
